@@ -1,2 +1,2 @@
 # POCtoProduction-AI-Solutions
-Repo is specially for article and challenges might occur in different AI or other solutions from requirement to production
+This repo is specifically for articles, and challenges might occur across different AI or other solutions, from requirement to production.
