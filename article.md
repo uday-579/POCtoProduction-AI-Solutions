@@ -23,7 +23,8 @@ Before touching a single component, put this on the whiteboard and keep it there
 Nearly every architectural choice below is really a trade-off between these three. A managed, pay-as-you-go extraction service is more resilient and scales without you managing infrastructure, but it costs more per document than a self-hosted OCR model that you now have to keep alive. There is no universally "correct" answer — there is only the answer that matches your document volume, your update frequency, and your budget. Treat every section below as a decision point on that triangle, not a recommendation to copy.
 
 Security and governance are addressed as a dedicated topic at the end of this series, once the full pipeline is on the table — largely because if you build on cloud-native, enterprise-grade services throughout, a meaningful share of that burden (encryption at rest, access control propagation, audit logging) comes with the platform rather than something you build yourself.
-
+- **Security is cross-cutting, not confined to one layer** - it "applies at every layer" rather than being a single triangle corner. RAG does not reduce risk -- it redistributes it across the data pipeline, creating new attack surfaces at every stage from ingestion to generation to output. Similarly, RAG pipelines must treat authorization as a first-class concern across ingestion, indexing, retrieval, and generation — the four stages where security gaps most commonly appear. And another source frames it identically: Securing RAG in production requires controls at all four stages of the pipeline. No single tool addresses the full surface, and attempting to solve RAG security with a perimeter-focused or response-only approach leaves the ingestion and retrieval layers unprotected.
+- **Deferring the detailed security discussion until after all layers are laid out is a defensible structural choice**
 ---
 
 ## Layer 1: Data Ingestion — the layer that decides everything downstream
