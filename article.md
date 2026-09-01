@@ -109,3 +109,5 @@ For every layer above, before signing off on a production design, ask:
 Phase 1 builds the data backbone: source to searchable index, balanced across scalability, resilience, and cost. Phase 2 of this series moves to the layers that sit on top of it — query processing, retrieval and re-ranking, context assembly, generation, orchestration, evaluation, and guardrails — where a different set of production failure modes shows up: retrieval that looks fine on a benchmark but degrades under real user queries, latency budgets that get eaten by re-ranking, and the observability you need to debug a bad answer three hops after it left the vector store.
 
 The architecture diagram below maps every component and decision point discussed here into a single view of the data flow, from source connector to searchable index.
+
+<iframe src="rag-architecture-phase1-diagram.html" width="100%" height="700" style="border:1px solid #ddd; border-radius:8px;" title="RAG in Production - Data Flow Architecture Diagram"></iframe>
