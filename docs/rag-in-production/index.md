@@ -115,3 +115,21 @@ The architecture diagram below maps every component and decision point discussed
 ---
 
 [← Back to all articles](../../index.md) &nbsp;|&nbsp; [Phase 2: Query, Retrieval & Generation →](./rag-production-phase2-query-retrieval-generation.md)
+
+## Comments
+
+<script src="https://giscus.app/client.js"
+        data-repo="uday-579/POCtoProduction-AI-Solutions"
+        data-repo-id="R_kgDOUKZfgA"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOUKZfgM4DEu_R"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>

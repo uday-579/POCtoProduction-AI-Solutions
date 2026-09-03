@@ -126,3 +126,21 @@ Phase 2 gets a query from the user's mouth to a validated response — query pro
 ---
 
 [← Phase 1: The Data Backbone Nobody Demos](./index.md) &nbsp;|&nbsp; [Back to all articles](../../index.md)
+
+## Comments
+
+<script src="https://giscus.app/client.js"
+        data-repo="uday-579/POCtoProduction-AI-Solutions"
+        data-repo-id="R_kgDOUKZfgA"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOUKZfgM4DEu_R"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
