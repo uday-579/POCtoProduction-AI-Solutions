@@ -125,7 +125,7 @@ Phase 2 gets a query from the user's mouth to a validated response — query pro
 
 ---
 
-[← Phase 1: The Data Backbone Nobody Demos](./index.md) &nbsp;|&nbsp; [Back to all articles](../../index.md)
+[← Phase 1: The Data Backbone Nobody Demos](./index.md) &nbsp;|&nbsp; [Back to all articles](../index.md)
 
 ## Comments
 
