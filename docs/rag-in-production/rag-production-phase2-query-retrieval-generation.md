@@ -1,6 +1,6 @@
 # RAG in Production — Phase 2: Query, Retrieval & Generation — Where Latency Meets Judgment
 
-*Part 2 of a series on turning RAG proofs-of-concept into production-grade systems. [Phase 1](./rag-production-phase1-data-backbone.md) built the data backbone — ingestion through storage. Phase 2 picks up the moment a query enters the system and follows it through to the response a user actually reads.*
+*Part 2 of a series on turning RAG proofs-of-concept into production-grade systems. [Phase 1](./index.md) built the data backbone — ingestion through storage. Phase 2 picks up the moment a query enters the system and follows it through to the response a user actually reads.*
 
 ## Same triangle, one new constraint
 
@@ -122,3 +122,25 @@ Raw LLM text is not a deliverable; it's an input to a validation step.
 ## What's next
 
 Phase 2 gets a query from the user's mouth to a validated response — query processing, retrieval, context assembly, and generation, all under a live latency budget. Phase 3 moves to the layer that wires all nine layers together and watches them: orchestration and caching, retrieval and generation evaluation, tracing that lets you debug a bad answer three hops after it left the vector store, and the input/output guardrails that catch what validation alone doesn't.
+
+---
+
+[← Phase 1: The Data Backbone Nobody Demos](./index.md) &nbsp;|&nbsp; [Back to all articles](../../index.md)
+
+## Comments
+
+<script src="https://giscus.app/client.js"
+        data-repo="uday-579/POCtoProduction-AI-Solutions"
+        data-repo-id="R_kgDOUKZfgA"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOUKZfgM4DEu_R"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>

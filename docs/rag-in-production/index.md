@@ -111,3 +111,25 @@ The architecture diagram below maps every component and decision point discussed
 <iframe src="rag-architecture-phase1-diagram.html" width="100%" height="700" style="border:1px solid #ddd; border-radius:8px;" title="RAG in Production - Data Flow Architecture Diagram">
   <p><a href="rag-architecture-phase1-diagram.html">View the architecture diagram</a> (your browser does not support iframes).</p>
 </iframe>
+
+---
+
+[← Back to all articles](../../index.md) &nbsp;|&nbsp; [Phase 2: Query, Retrieval & Generation →](./rag-production-phase2-query-retrieval-generation.md)
+
+## Comments
+
+<script src="https://giscus.app/client.js"
+        data-repo="uday-579/POCtoProduction-AI-Solutions"
+        data-repo-id="R_kgDOUKZfgA"
+        data-category="Announcements"
+        data-category-id="DIC_kwDOUKZfgM4DEu_R"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
