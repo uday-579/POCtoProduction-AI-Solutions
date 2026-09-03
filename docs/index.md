@@ -1,4 +1,3 @@
-# POCtoProduction AI Solutions
 
 This repo is specifically for articles on turning AI proofs-of-concept into production-grade systems — the challenges that show up across different AI solutions, from requirement to production.
 
