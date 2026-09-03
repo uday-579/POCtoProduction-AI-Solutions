@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RAG Production Architecture — Phase 2: Query, Retrieval &amp; Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d1a1c;
+    --bg-soft: #122327;
+    --panel: #14262a;
+    --line: #24393d;
+    --text: #eeece3;
+    --muted: #8fa3a6;
+
+    --query: #4fb3d9;
+    --retrieve: #d9497a;
+    --context: #a3c94f;
+    --generate: #e0a23d;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; }
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 48px 24px 80px; }
+  .masthead{ margin-bottom: 30px; }
+  .masthead .kicker{ font-family:'JetBrains Mono', monospace; font-size:12px; color: var(--muted); letter-spacing:.04em; margin-bottom:10px; }
+  .masthead h1{ font-size: 34px; font-weight: 700; line-height: 1.15; margin: 0 0 10px; max-width: 760px; }
+  .masthead p{ color: var(--muted); font-size: 15.5px; line-height: 1.6; max-width: 660px; margin: 0; }
+
+  .triangle-row{
+    display:flex; align-items:center; gap: 36px; margin: 30px 0 50px;
+    padding: 22px 26px; background: var(--bg-soft); border: 1px solid var(--line); border-radius: 6px; flex-wrap: wrap;
+  }
+  .triforce{ display:flex; gap:10px; flex-shrink:0; flex-wrap:wrap; }
+  .tri-pill{ font-family:'JetBrains Mono', monospace; font-size: 12px; padding: 7px 14px; border-radius: 999px; border: 1px solid currentColor; }
+  .tri-pill.scale{ color: var(--query); }
+  .tri-pill.resil{ color: var(--context); }
+  .tri-pill.cost{ color: var(--generate); }
+  .tri-pill.latency{ color: var(--retrieve); }
+  .triangle-row .note{ color: var(--muted); font-size: 13.5px; line-height:1.5; }
+
+  .layer{ margin-bottom: 10px; }
+  .layer-head{ display:flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .layer-num{
+    font-family:'JetBrains Mono', monospace; font-size: 13px; color: var(--bg); background: var(--accent, var(--query));
+    width: 26px; height: 26px; border-radius: 50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight: 600;
+  }
+  .layer-head h2{ font-size: 19px; font-weight: 600; margin: 0; }
+  .layer-head .tag{ font-family:'JetBrains Mono', monospace; font-size: 11.5px; color: var(--muted); }
+  .band{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 4px 4px; }
+  .band svg{ display:block; width:100%; height:auto; }
+
+  .connector{ display:flex; justify-content:center; padding: 6px 0; }
+
+  .legend{ margin-top: 50px; border-top: 1px solid var(--line); padding-top: 24px; display:flex; flex-wrap:wrap; gap: 22px 30px; }
+  .legend-item{ display:flex; align-items:center; gap: 8px; font-size: 12.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .legend-item .sw{ width: 12px; height: 12px; border-radius: 3px; flex-shrink:0; }
+  .foot{ margin-top: 30px; color: var(--muted); font-size: 12.5px; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+
+  .node-box{ fill: var(--bg-soft); stroke-width: 1.4; rx:7; }
+  .node-title{ fill: var(--text); font-family:'Space Grotesk', sans-serif; font-weight:600; }
+  .node-sub{ fill: var(--muted); font-family:'JetBrains Mono', monospace; }
+  .edge-line{ fill:none; stroke: var(--line); stroke-width: 1.6; }
+  .flow-dot{ filter: drop-shadow(0 0 3px currentColor); }
+  .decision{ fill: var(--bg); stroke-width: 1.4; }
+  .dashed{ stroke-dasharray: 4 4; }
+
+  @media (max-width: 720px){ .masthead h1{ font-size: 26px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="kicker">PHASE 2 — CONTINUES FROM: SOURCE → SEARCHABLE INDEX</div>
+    <h1>RAG in Production — Phase 2<br>Query, Retrieval &amp; Generation</h1>
+    <p>A query enters, a validated response leaves. Every branch below now runs inside a live request — latency is a first-class force alongside scalability, resilience, and cost.</p>
+  </div>
+
+  <div class="triangle-row">
+    <div class="triforce">
+      <span class="tri-pill scale">SCALABILITY</span>
+      <span class="tri-pill resil">RESILIENCE</span>
+      <span class="tri-pill cost">COST</span>
+      <span class="tri-pill latency">LATENCY</span>
+    </div>
+    <div class="note">Phase 1's triangle gains a fourth force here: every layer below sits inside a live user request, not a batch job.</div>
+  </div>
+
+  <!-- LAYER 6 -->
+  <div class="layer">
+    <div class="layer-head">
+      <div class="layer-num" style="background:var(--query)">6</div>
+      <h2>Query Processing</h2>
+      <span class="tag">route by query type → rewrite / decompose / HyDE → embed</span>
+    </div>
+    <div class="band"><svg id="svg-query" viewBox="0 0 1140 360"></svg></div>
+  </div>
+
+  <div class="connector"><svg width="24" height="34" viewBox="0 0 24 34"><path d="M12 2 L12 28" stroke="#3a4d51" stroke-width="2"/><path d="M5 22 L12 30 L19 22" fill="none" stroke="#3a4d51" stroke-width="2"/></svg></div>
+
+  <!-- LAYER 7 -->
+  <div class="layer">
+    <div class="layer-head">
+      <div class="layer-num" style="background:var(--retrieve)">7</div>
+      <h2>Retrieval</h2>
+      <span class="tag">vector / BM25 / hybrid → filter (ACL) → re-rank</span>
+    </div>
+    <div class="band"><svg id="svg-retrieve" viewBox="0 0 1140 340"></svg></div>
+  </div>
+
+  <div class="connector"><svg width="24" height="34" viewBox="0 0 24 34"><path d="M12 2 L12 28" stroke="#3a4d51" stroke-width="2"/><path d="M5 22 L12 30 L19 22" fill="none" stroke="#3a4d51" stroke-width="2"/></svg></div>
+
+  <!-- LAYER 8 -->
+  <div class="layer">
+    <div class="layer-head">
+      <div class="layer-num" style="background:var(--context)">8</div>
+      <h2>Context Assembly</h2>
+      <span class="tag">dedupe → trim → order (lost-in-middle) → compress → template</span>
+    </div>
+    <div class="band"><svg id="svg-context" viewBox="0 0 1140 260"></svg></div>
+  </div>
+
+  <div class="connector"><svg width="24" height="34" viewBox="0 0 24 34"><path d="M12 2 L12 28" stroke="#3a4d51" stroke-width="2"/><path d="M5 22 L12 30 L19 22" fill="none" stroke="#3a4d51" stroke-width="2"/></svg></div>
+
+  <!-- LAYER 9 -->
+  <div class="layer">
+    <div class="layer-head">
+      <div class="layer-num" style="background:var(--generate)">9</div>
+      <h2>Generation</h2>
+      <span class="tag">adapter → LLM call → parse / validate → repair loop</span>
+    </div>
+    <div class="band"><svg id="svg-generate" viewBox="0 0 1140 300"></svg></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="sw" style="background:var(--query)"></span> Query Processing</div>
+    <div class="legend-item"><span class="sw" style="background:var(--retrieve)"></span> Retrieval</div>
+    <div class="legend-item"><span class="sw" style="background:var(--context)"></span> Context Assembly</div>
+    <div class="legend-item"><span class="sw" style="background:var(--generate)"></span> Generation</div>
+    <div class="legend-item">⋯ dashed = conditional / routed path</div>
+    <div class="legend-item">◆ diamond = decision point</div>
+    <div class="legend-item">⚡ = routing decision (Phase 1 principle)</div>
+  </div>
+
+  <div class="foot">Hover any box for its role. Moving dots trace the direction of data flow through each layer. This picks up directly where the Phase 1 diagram's Storage &amp; Indexing layer ends.</div>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs){ const e = document.createElementNS(NS, tag); for(const k in attrs){ e.setAttribute(k, attrs[k]); } return e; }
+
+function wrapText(svg, x, y, text, cls, maxWidth, fontSize){
+  const words = text.split(" ");
+  const lines = []; let cur = "";
+  const charBudget = Math.floor(maxWidth / (fontSize*0.56));
+  words.forEach(w=>{
+    if((cur + " " + w).trim().length > charBudget){ lines.push(cur.trim()); cur = w; }
+    else { cur = (cur + " " + w).trim(); }
+  });
+  if(cur) lines.push(cur);
+  const t = el("text", {x, y: y - (lines.length-1)*(fontSize*0.6), class: cls, "font-size": fontSize, "text-anchor":"middle"});
+  lines.forEach((line, i)=>{ const ts = el("tspan", {x, dy: i===0? 0 : fontSize*1.2}); ts.textContent = line; t.appendChild(ts); });
+  svg.appendChild(t);
+}
+
+function drawNode(svg, n, color){
+  const g = el("g", {});
+  const box = el("rect", Object.assign({ x: n.x, y: n.y, width: n.w, height: n.h, class: "node-box", stroke: color }));
+  g.appendChild(box);
+  const title = el("title", {}); title.textContent = n.tooltip || n.label; g.appendChild(title);
+  const cx = n.x + n.w/2;
+  const label = (n.flag? "⚡ " : "") + n.label;
+  wrapText(g, cx, n.y + n.h/2 - (n.sub? 6:0), label, "node-title", n.w-16, 12.5);
+  if(n.sub){
+    const subY = n.y + n.h - 12;
+    const st = el("text", {x: cx, y: subY, class:"node-sub", "font-size":10, "text-anchor":"middle"});
+    st.textContent = n.sub; g.appendChild(st);
+  }
+  svg.appendChild(g);
+}
+
+function drawDiamond(svg, n, color){
+  const cx = n.x + n.w/2, cy = n.y + n.h/2;
+  const pts = [[cx, n.y], [n.x+n.w, cy], [cx, n.y+n.h], [n.x, cy]].map(p=>p.join(",")).join(" ");
+  const poly = el("polygon", {points: pts, class:"decision", stroke: color}); svg.appendChild(poly);
+  const title = el("title", {}); title.textContent = n.tooltip || n.label; svg.appendChild(title);
+  wrapText(svg, cx, cy, n.label, "node-sub", n.w-30, 10);
+}
+
+function edgePath(a, b, curve){ const dx = (b.x - a.x) * (curve || 0.5); return `M ${a.x} ${a.y} C ${a.x+dx} ${a.y}, ${b.x-dx} ${b.y}, ${b.x} ${b.y}`; }
+
+function drawEdge(svg, from, to, opts){
+  opts = opts || {};
+  const path = el("path", { d: edgePath(from, to, opts.curve), class: "edge-line" + (opts.dashed ? " dashed" : "") });
+  const id = "p" + Math.random().toString(36).slice(2,9);
+  path.setAttribute("id", id); svg.appendChild(path);
+  if(!opts.noFlow){
+    const dot = el("circle", {r: 3.2, fill: opts.color || "#ffffff", class:"flow-dot"});
+    const anim = el("animateMotion", {dur: opts.dur || "2.6s", repeatCount:"indefinite", begin: opts.delay || "0s"});
+    const mpath = el("mpath", {href: "#"+id}); anim.appendChild(mpath); dot.appendChild(anim); svg.appendChild(dot);
+  }
+  const ah = el("path", { d: `M ${to.x-6} ${to.y-4} L ${to.x} ${to.y} L ${to.x-6} ${to.y+4}`, fill:"none", stroke: "#3a4d51", "stroke-width":1.6 });
+  svg.appendChild(ah);
+}
+
+/* ---------------- LAYER 6: QUERY PROCESSING ---------------- */
+(function(){
+  const svg = document.getElementById("svg-query");
+  const color = "#4fb3d9";
+
+  const ctxMgr = {x:20, y:20, w:190, h:64, label:"Context Manager", sub:"Redis / DynamoDB session", tooltip:"Owns chat history storage & session lifecycle — outside this layer, but feeds it."};
+  const rawQuery = {x:20, y:110, w:190, h:64, label:"Raw User Query", sub:"", tooltip:"Short, ambiguous, conversational — rarely matches source-document phrasing."};
+
+  const router = {x:280, y:150, w:200, h:80, label:"Query Type Router", sub:"deterministic pattern check", tooltip:"Cheap classifier decides if a query needs rewriting at all — most well-formed queries should pass straight through.", flag:true};
+
+  const paths = [
+    {id:"pass", x:560, y:20, w:220, h:60, label:"Direct Pass-through", sub:"short, well-formed queries", tooltip:"No LLM call — the query is already a clean search term."},
+    {id:"rewrite", x:560, y:96, w:220, h:60, label:"Query Rewriting", sub:"lightweight LLM", tooltip:"Fixes ambiguous/colloquial phrasing and resolves chat coreference, e.g. 'how much does it cost?' → 'What is the price of Product X?'"},
+    {id:"decomp", x:560, y:172, w:220, h:60, label:"Query Decomposition", sub:"multi-hop → sub-queries in parallel", tooltip:"Splits a multi-part question into independent sub-queries, merged after retrieval."},
+    {id:"hyde", x:560, y:248, w:220, h:70, label:"HyDE", sub:"LLM drafts hypothetical answer first", tooltip:"For conceptual/abstract queries only — two LLM calls, real hallucination risk if the fake answer is wrong."}
+  ];
+
+  drawEdge(svg, {x:ctxMgr.x+ctxMgr.w, y:ctxMgr.y+ctxMgr.h/2}, {x:router.x, y:router.y+router.h/2-14}, {color, dashed:true, noFlow:true});
+  drawEdge(svg, {x:rawQuery.x+rawQuery.w, y:rawQuery.y+rawQuery.h/2}, {x:router.x, y:router.y+router.h/2+14}, {color, delay:"0s"});
+  paths.forEach(p=> drawEdge(svg, {x:router.x+router.w, y:router.y+router.h/2}, {x:p.x, y:p.y+p.h/2}, {color, delay:(Math.random()*1.5).toFixed(1)+"s"}));
+
+  const embedder = {x:870, y:150, w:230, h:80, label:"Query Embedder", sub:"reuses ingestion embedding adapter", tooltip:"Must share the exact model/adapter used at ingestion — any mismatch silently degrades retrieval."};
+  paths.forEach(p=> drawEdge(svg, {x:p.x+p.w, y:p.y+p.h/2}, {x:embedder.x, y:embedder.y+embedder.h/2}, {color, delay:(Math.random()*1.5).toFixed(1)+"s"}));
+
+  drawNode(svg, ctxMgr, color); drawNode(svg, rawQuery, color); drawNode(svg, router, color);
+  paths.forEach(p=>drawNode(svg, p, color));
+  drawNode(svg, embedder, color);
+})();
+
+/* ---------------- LAYER 7: RETRIEVAL ---------------- */
+(function(){
+  const svg = document.getElementById("svg-retrieve");
+  const color = "#d9497a";
+
+  const embedIn = {x:20, y:130, w:170, h:60, label:"Embedded Query", sub:"from Layer 6", tooltip:"Handoff from Query Processing."};
+
+  const vec = {x:270, y:30, w:200, h:60, label:"Vector Search", sub:"semantic / conceptual match", tooltip:"Wins on conceptual queries with low literal keyword overlap."};
+  const bm25 = {x:270, y:110, w:200, h:60, label:"BM25 / Keyword Search", sub:"exact-match lookups", tooltip:"Wins where semantics actively hurt — exact IDs, error codes, part numbers."};
+  const hybrid = {x:270, y:190, w:200, h:60, label:"Hybrid Combiner (RRF)", sub:"reciprocal rank fusion", tooltip:"Merges vector + keyword ranks — right default for mixed query populations."};
+
+  drawEdge(svg, {x:embedIn.x+embedIn.w, y:embedIn.y+embedIn.h/2}, {x:vec.x, y:vec.y+vec.h/2}, {color, delay:"0s"});
+  drawEdge(svg, {x:embedIn.x+embedIn.w, y:embedIn.y+embedIn.h/2}, {x:bm25.x, y:bm25.y+bm25.h/2}, {color, delay:"0.6s"});
+  drawEdge(svg, {x:vec.x+vec.w, y:vec.y+vec.h/2}, {x:hybrid.x, y:hybrid.y+hybrid.h/2}, {color, dashed:true, noFlow:true});
+  drawEdge(svg, {x:bm25.x+bm25.w, y:bm25.y+bm25.h/2}, {x:hybrid.x, y:hybrid.y+hybrid.h/2}, {color, dashed:true, noFlow:true});
+
+  const filter = {x:560, y:110, w:220, h:80, label:"Metadata Filter", sub:"ACL, tenant, date range", tooltip:"Pre-filter (sparse tenants: enforce security first) vs. post-filter (dense index: keep search fast) is a real trade-off, not a style choice."};
+  drawEdge(svg, {x:hybrid.x+hybrid.w, y:hybrid.y+hybrid.h/2}, {x:filter.x, y:filter.y+filter.h/2}, {color});
+
+  const decide = {x:860, y:100, w:170, h:100, label:"Re-rank needed?", sub:"stakes vs. latency", tooltip:"Cross-encoder by default. LLM re-rank only for high-stakes traffic (legal/medical/compliance) — never as the default."};
+  drawEdge(svg, {x:filter.x+filter.w, y:filter.y+filter.h/2}, {x:decide.x, y:decide.y+decide.h/2}, {color, dashed:true, noFlow:true});
+
+  drawNode(svg, embedIn, color); drawNode(svg, vec, color); drawNode(svg, bm25, color); drawNode(svg, hybrid, color); drawNode(svg, filter, color);
+  drawDiamond(svg, decide, color);
+})();
+
+/* ---------------- LAYER 8: CONTEXT ASSEMBLY ---------------- */
+(function(){
+  const svg = document.getElementById("svg-context");
+  const color = "#a3c94f";
+
+  const dedupe = {x:20, y:70, w:170, h:70, label:"Dedupe", sub:"collapse near-identical chunks", tooltip:"Three SharePoint versions of one paragraph should reach the prompt once, not three times."};
+  const trim = {x:230, y:70, w:170, h:70, label:"Trim / Window Fit", sub:"drop lowest-scoring chunks", tooltip:"Keeps the payload inside the model's context window with safety margin."};
+  const order = {x:440, y:70, w:190, h:70, label:"Strategic Ordering", sub:"fights 'lost in the middle'", tooltip:"Highest-relevance chunk placed first and last; weaker chunks buried mid-prompt."};
+  const compress = {x:670, y:70, w:220, h:70, label:"Compression", sub:"extractive default → small LLM if aggressive", tooltip:"LLMLingua-style extractive compression by default; escalate to a small model only when the ratio needed is too aggressive for extraction alone.", flag:true};
+  const template = {x:930, y:70, w:190, h:70, label:"Prompt Template Manager", sub:"versioned, A/B routed", tooltip:"Decouples prompt wording from application code; supports live A/B rollout of new templates."};
+
+  [dedupe, trim, order, compress, template].forEach((n,i)=>drawNode(svg, n, color));
+  drawEdge(svg, {x:dedupe.x+dedupe.w, y:dedupe.y+dedupe.h/2}, {x:trim.x, y:trim.y+trim.h/2}, {color});
+  drawEdge(svg, {x:trim.x+trim.w, y:trim.y+trim.h/2}, {x:order.x, y:order.y+order.h/2}, {color});
+  drawEdge(svg, {x:order.x+order.w, y:order.y+order.h/2}, {x:compress.x, y:compress.y+compress.h/2}, {color});
+  drawEdge(svg, {x:compress.x+compress.w, y:compress.y+compress.h/2}, {x:template.x, y:template.y+template.h/2}, {color});
+})();
+
+/* ---------------- LAYER 9: GENERATION ---------------- */
+(function(){
+  const svg = document.getElementById("svg-generate");
+  const color = "#e0a23d";
+
+  const adapter = {x:30, y:110, w:230, h:80, label:"LLM Adapter", sub:"model-agnostic, retries, fallback", tooltip:"Swap models via config — resiliency (retries, backoff, fallback) lives here, independent of which model is active."};
+
+  const decide = {x:320, y:100, w:190, h:100, label:"Draft small, escalate?", sub:"cascade routing", tooltip:"Default to a smaller/cheaper model for the draft; escalate to frontier only if validation fails or the query is flagged high-stakes.", flag:true};
+
+  const small = {x:580, y:20, w:210, h:60, label:"Small / Mid-tier Model", sub:"default draft", tooltip:"Handles the large majority of generation requests at a fraction of the cost and latency."};
+  const frontier = {x:580, y:100, w:210, h:60, label:"Frontier Model", sub:"escalation only", tooltip:"Reserved for validator failures, high-stakes flags, or repeated self-correction failures."};
+
+  const parser = {x:860, y:60, w:250, h:80, label:"Output Parser / Validator", sub:"schema, citations, guardrails", tooltip:"Checks citations against chunks actually in context — the most direct hallucination check available."};
+
+  const repair = {x:860, y:190, w:250, h:70, label:"Self-Correction Loop", sub:"malformed output → feed error back", tooltip:"On validation failure, feeds the specific error back for a targeted fix rather than a full regeneration."};
+
+  drawEdge(svg, {x:adapter.x+adapter.w, y:adapter.y+adapter.h/2}, {x:decide.x, y:decide.y+decide.h/2}, {color});
+  drawEdge(svg, {x:decide.x+decide.w, y:decide.y+decide.h/2}, {x:small.x, y:small.y+small.h/2}, {color, delay:"0s"});
+  drawEdge(svg, {x:decide.x+decide.w, y:decide.y+decide.h/2}, {x:frontier.x, y:frontier.y+frontier.h/2}, {color, dashed:true, noFlow:true});
+  drawEdge(svg, {x:small.x+small.w, y:small.y+small.h/2}, {x:parser.x, y:parser.y+parser.h/2}, {color});
+  drawEdge(svg, {x:frontier.x+frontier.w, y:frontier.y+frontier.h/2}, {x:parser.x, y:parser.y+parser.h/2}, {color, dashed:true, noFlow:true});
+  drawEdge(svg, {x:parser.x+parser.w/2, y:parser.y+parser.h}, {x:repair.x+repair.w/2, y:repair.y}, {color, dashed:true, noFlow:true, curve:0.1});
+  drawEdge(svg, {x:repair.x, y:repair.y+repair.h/2}, {x:decide.x+decide.w/2, y:decide.y+decide.h}, {color, dashed:true, noFlow:true, curve:0.4});
+
+  drawNode(svg, adapter, color); drawDiamond(svg, decide, color);
+  drawNode(svg, small, color); drawNode(svg, frontier, color);
+  drawNode(svg, parser, color); drawNode(svg, repair, color);
+})();
+</script>
+</body>
+</html>
