@@ -114,7 +114,7 @@ The architecture diagram below maps every component and decision point discussed
 
 ---
 
-[← Back to all articles](../../index.md) &nbsp;|&nbsp; [Phase 2: Query, Retrieval & Generation →](./rag-production-phase2-query-retrieval-generation.md)
+[← Back to all articles](../index.md) &nbsp;|&nbsp; [Phase 2: Query, Retrieval & Generation →](./rag-production-phase2-query-retrieval-generation.md)
 
 ## Comments
 
