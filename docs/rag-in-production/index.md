@@ -111,3 +111,7 @@ The architecture diagram below maps every component and decision point discussed
 <iframe src="rag-architecture-phase1-diagram.html" width="100%" height="700" style="border:1px solid #ddd; border-radius:8px;" title="RAG in Production - Data Flow Architecture Diagram">
   <p><a href="rag-architecture-phase1-diagram.html">View the architecture diagram</a> (your browser does not support iframes).</p>
 </iframe>
+
+---
+
+[← Back to all articles](../../index.md) &nbsp;|&nbsp; [Phase 2: Query, Retrieval & Generation →](./rag-production-phase2-query-retrieval-generation.md)
